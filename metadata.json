@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix  Amiral Battı 03",
+  "description": "30x30 Offline 2-4 Kişilik Taktiksel Amiral Battı Oyunu (Bluetooth, AI, WeRTC) vb",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

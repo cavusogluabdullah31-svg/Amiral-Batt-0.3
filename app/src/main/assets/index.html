@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>Amiral Battı 30x30</title>
+<style>
+/* CSS RESET & VARIABLES */
+:root {
+  --bg-primary: #060b19;
+  --bg-secondary: #0c1833;
+  --bg-card: rgba(15, 30, 65, 0.9);
+  --bg-card-border: rgba(0, 229, 255, 0.35);
+  --accent-cyan: #00e5ff;
+  --accent-green: #00e676;
+  --accent-gold: #ffb300;
+  --accent-red: #ff3d00;
+  --accent-orange: #ff9100;
+  --text-main: #e0f2fe;
+  --text-muted: #7dd3fc;
+  --grid-line: rgba(0, 229, 255, 0.22);
+  --hit-color: #ff3d00;
+  --miss-color: #0284c7;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  font-size: 14px;
+}
+
+#app-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at center, #0f244c 0%, #060b19 100%);
+}
+
+/* SCREEN MANAGEMENT */
+.screen {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 16px;
+  z-index: 10;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* COMMON UI COMPONENTS */
+.hud-card {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 16px rgba(0, 229, 255, 0.05);
+  backdrop-filter: blur(8px);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(0, 119, 182, 0.3));
+  color: var(--accent-cyan);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+
+.btn:active {
+  transform: scale(0.96);
+  background: rgba(0, 229, 255, 0.4);
+  color: #fff;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #00b4d8, #0077b6);
+  color: #ffffff;
+  border: 1px solid var(--accent-cyan);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, #ff9100, #ff3d00);
+  color: #ffffff;
+  border-color: #ff9100;
+  box-shadow: 0 0 15px rgba(255, 61, 0, 0.4);
+}
+
+.btn-danger {
+  background: rgba(255, 61, 0, 0.2);
+  color: #ff5252;
+  border-color: #ff5252;
+}
+
+.btn-sm {
+  min-height: 38px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* HEADER & TITLES */
+.title-glitch {
+  font-size: 26px;
+  font-weight: 900;
+  text-align: center;
+  color: #fff;
+  letter-spacing: 2.5px;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.8);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  letter-spacing: 1.2px;
+  margin-bottom: 18px;
+}
+
+/* MAIN MENU SCREEN */
+#screen-menu {
+  justify-content: center;
+  align-items: center;
+  max-width: 500px;
+  margin: auto;
+}
+
+.menu-brand {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.radar-logo {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 16px auto;
+  border: 2px solid var(--accent-cyan);
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
+}
+
+.radar-logo::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(0, 229, 255, 0.4);
+}
+
+.radar-logo::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  background: rgba(0, 229, 255, 0.4);
+}
+
+.radar-sweep {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(0, 229, 255, 0.6) 0deg, transparent 60deg);
+  animation: radar-spin 3s linear infinite;
+}
+
+@keyframes radar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* LOBBY / ROOM */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+.badge-ready { background: rgba(0, 230, 118, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+.badge-waiting { background: rgba(255, 179, 0, 0.2); color: var(--accent-gold); border: 1px solid var(--accent-gold); }
+.badge-host { background: rgba(0, 229, 255, 0.2); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+
+.player-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border-left: 4px solid var(--accent-cyan);
+}
+
+/* GAMEPLAY & CANVAS */
+#gameplay-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(6, 11, 25, 0.95);
+  border-bottom: 1px solid var(--bg-card-border);
+  z-index: 20;
+  min-height: 48px;
+}
+
+.turn-pill {
+  font-weight: bold;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(0, 229, 255, 0.15);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  font-size: 12px;
+}
+
+.turn-pill.my-turn {
+  background: rgba(0, 230, 118, 0.25);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  animation: pulse-turn 1.5s infinite;
+}
+
+@keyframes pulse-turn {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 230, 118, 0.4); }
+  50% { box-shadow: 0 0 15px rgba(0, 230, 118, 0.8); }
+}
+
+.board-switch {
+  display: flex;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(6, 11, 25, 0.95);
+  border-bottom: 1px solid var(--bg-card-border);
+  overflow-x: auto;
+  z-index: 15;
+}
+
+.board-tab {
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: rgba(12, 24, 51, 0.7);
+  color: var(--text-muted);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.board-tab.active {
+  background: rgba(0, 229, 255, 0.25);
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+}
+
+#canvas-viewport {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #030712;
+  overflow: hidden;
+  touch-action: none;
+}
+
+#game-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* FLOATING HUD OVERLAYS */
+.minimap-container {
+  position: absolute;
+  bottom: 74px;
+  right: 12px;
+  width: 95px;
+  height: 95px;
+  background: rgba(6, 11, 25, 0.9);
+  border: 1.5px solid var(--accent-cyan);
+  border-radius: 6px;
+  z-index: 25;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+}
+
+#minimap-canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.coord-display {
+  position: absolute;
+  bottom: 74px;
+  left: 12px;
+  padding: 6px 12px;
+  background: rgba(6, 11, 25, 0.9);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-cyan);
+  z-index: 25;
+  pointer-events: none;
+}
+
+.bottom-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(6, 11, 25, 0.95);
+  border-top: 1px solid var(--bg-card-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 25;
+  gap: 8px;
+}
+
+/* TOAST NOTIFICATION */
+#floating-toast {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(12, 24, 51, 0.95);
+  border: 1.5px solid var(--accent-cyan);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: bold;
+  z-index: 99;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#floating-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(5px);
+}
+
+/* SHIP PLACEMENT HUD */
+.ship-dock {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 4px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+}
+
+.ship-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(12, 24, 51, 0.8);
+  min-width: 90px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ship-item.selected {
+  border-color: var(--accent-green);
+  background: rgba(0, 230, 118, 0.2);
+  box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
+}
+
+.ship-item.placed {
+  opacity: 0.4;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* DEVICE LIST */
+.device-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+/* MODAL DIALOG */
+.modal-backdrop {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+
+.modal-backdrop.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--accent-cyan);
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.35);
+}
+
+/* INPUTS */
+.input-field {
+  width: 100%;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.input-field:focus {
+  outline: none;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+/* SETTINGS FORM */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+}
+
+.toggle-switch {
+  width: 48px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 13px;
+  position: relative;
+  cursor: pointer;
+}
+
+.toggle-switch.on {
+  background: var(--accent-cyan);
+}
+
+.toggle-knob {
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch.on .toggle-knob {
+  transform: translateX(22px);
+}
+</style>
+</head>
+<body>
+
+<div id="app-root">
+
+  <!-- FLOATING TOAST -->
+  <div id="floating-toast">-</div>
+
+  <!-- 1. INTRO / SPLASH SCREEN -->
+  <div id="screen-splash" class="screen active" style="justify-content: center; align-items: center;">
+    <div class="radar-logo"><div class="radar-sweep"></div></div>
+    <div class="title-glitch">AMİRAL BATTI</div>
+    <div class="subtitle">30×30 TAKTİKSEL DENİZ SAVAŞI</div>
+    <div style="color: var(--accent-cyan); font-size: 12px; margin-top: 20px;">Sistemler Başlatılıyor...</div>
+  </div>
+
+  <!-- 2. MAIN MENU SCREEN -->
+  <div id="screen-menu" class="screen">
+    <div class="menu-brand">
+      <div class="radar-logo"><div class="radar-sweep"></div></div>
+      <h1 class="title-glitch">AMİRAL BATTI</h1>
+      <p class="subtitle">30×30 Taktiksel Çok Oyunculu Savaş</p>
+    </div>
+
+    <div class="menu-buttons">
+      <button class="btn btn-primary" id="btn-menu-ai">🤖 TEK OYUNCU (AI BOT)</button>
+      <button class="btn btn-primary" id="btn-menu-create">⚔️ OYUN OLUŞTUR (HOST / PAS & OYNA)</button>
+      <button class="btn btn-primary" id="btn-menu-join">📡 OYUNA KATIL (BLUETOOTH / P2P)</button>
+      <button class="btn" id="btn-menu-settings">⚙️ AYARLAR</button>
+    </div>
+
+    <div style="margin-top: 24px; text-align: center; color: var(--text-muted); font-size: 12px;">
+      30×30 Saha (900 Hücre) • 2–4 Oyuncu • AI & Bluetooth Destekli
+    </div>
+  </div>
+
+  <!-- 3. CREATE GAME SCREEN -->
+  <div id="screen-create" class="screen">
+    <div class="title-glitch" style="font-size: 22px;">OYUN OLUŞTUR</div>
+    <div class="subtitle">Oda Parametrelerini Belirleyin</div>
+
+    <div class="hud-card">
+      <label style="display:block; margin-bottom:8px; color:var(--text-muted);">Oyuncu Sayısı:</label>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+        <button class="btn btn-sm player-count-opt active" data-count="2">2 Oyuncu</button>
+        <button class="btn btn-sm player-count-opt" data-count="3">3 Oyuncu</button>
+        <button class="btn btn-sm player-count-opt" data-count="4">4 Oyuncu</button>
+      </div>
+
+      <label style="display:block; margin-bottom:8px; color:var(--text-muted);">Oyun / Bağlantı Yöntemi:</label>
+      <select id="select-transport-type" class="input-field" style="background:#0a1128;">
+        <option value="local">Aynı Cihaz (Pas & Oyna)</option>
+        <option value="bluetooth">Bluetooth (Android Native Bridge)</option>
+        <option value="webrtc">WebRTC / Yerel Ağ P2P</option>
+      </select>
+
+      <label style="display:block; margin-bottom:8px; color:var(--text-muted);">Amiral Adınız:</label>
+      <input type="text" id="input-host-name" class="input-field" value="Amiral 1" maxlength="15">
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:auto;">
+      <button class="btn btn-danger" style="flex:1;" id="btn-create-back">GERİ</button>
+      <button class="btn btn-primary" style="flex:2;" id="btn-create-confirm">ODA AÇ</button>
+    </div>
+  </div>
+
+  <!-- 4. JOIN GAME SCREEN -->
+  <div id="screen-join" class="screen">
+    <div class="title-glitch" style="font-size: 22px;">OYUNA KATIL</div>
+    <div class="subtitle">Çevredeki Odaları Arayın</div>
+
+    <div class="hud-card">
+      <label style="display:block; margin-bottom:8px; color:var(--text-muted);">Amiral Adınız:</label>
+      <input type="text" id="input-client-name" class="input-field" value="Amiral 2" maxlength="15">
+
+      <label style="display:block; margin-bottom:8px; color:var(--text-muted);">Bluetooth Eşleşmiş Cihazlar:</label>
+      <div id="paired-device-list" style="max-height:160px; overflow-y:auto; margin-bottom:12px;">
+        <div style="font-size:12px; color:var(--text-muted); padding:8px;">Cihazlar taranıyor...</div>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-sm" id="btn-refresh-devices" style="flex:1;">🔄 Yenile</button>
+        <button class="btn btn-sm" id="btn-scan-discovery" style="flex:1;">🔍 Çevreyi Tara</button>
+      </div>
+
+      <div id="join-status-box" style="margin-top:12px; padding:10px; background:rgba(0,0,0,0.3); border-radius:6px; font-size:12px;">
+        Hazır. Lütfen bağlanmak istediğiniz cihaza dokunun.
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:auto;">
+      <button class="btn btn-danger" style="flex:1;" id="btn-join-back">GERİ</button>
+    </div>
+  </div>
+
+  <!-- 5. LOBBY SCREEN -->
+  <div id="screen-lobby" class="screen">
+    <div class="title-glitch" style="font-size: 22px;">AMİRAL ODASI</div>
+    <div class="subtitle" id="lobby-room-status">Oyuncular: 1/2</div>
+
+    <div class="hud-card">
+      <div id="lobby-player-list"></div>
+    </div>
+
+    <div class="hud-card" style="font-size:12px; color:var(--text-muted);">
+      Bağlantı Türü: <span id="lobby-transport-name" style="color:var(--accent-cyan);">YEREL / PAS & OYNA</span>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:auto;">
+      <button class="btn btn-danger" style="flex:1;" id="btn-lobby-leave">AYRIL</button>
+      <button class="btn btn-primary" style="flex:2;" id="btn-lobby-start">OYUNU BAŞLAT</button>
+    </div>
+  </div>
+
+  <!-- 6. SINGLE PLAYER AI SELECT -->
+  <div id="screen-ai-setup" class="screen">
+    <div class="title-glitch" style="font-size: 22px;">TEK OYUNCU (AI)</div>
+    <div class="subtitle">Yapay Zeka Taktik Düzeyi</div>
+
+    <div class="hud-card">
+      <label style="display:block; margin-bottom:8px; color:var(--text-muted);">AI Zorluk Derecesi:</label>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+        <button class="btn ai-diff-btn active" data-diff="easy">🟢 KOLAY (Temel Keşif)</button>
+        <button class="btn ai-diff-btn" data-diff="medium">🟡 ORTA (Taktiksel Çevre Tarama)</button>
+        <button class="btn ai-diff-btn" data-diff="hard">🔴 ZOR (Olasılık Haritası & Odak Ateş)</button>
+      </div>
+
+      <label style="display:block; margin-bottom:8px; color:var(--text-muted);">Toplam Oyuncu:</label>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+        <button class="btn btn-sm ai-count-btn active" data-count="2">2 (1v1 AI)</button>
+        <button class="btn btn-sm ai-count-btn" data-count="3">3 (1v2 AI)</button>
+        <button class="btn btn-sm ai-count-btn" data-count="4">4 (1v3 AI)</button>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:auto;">
+      <button class="btn btn-danger" style="flex:1;" id="btn-ai-back">GERİ</button>
+      <button class="btn btn-primary" style="flex:2;" id="btn-ai-start">FİLOYU HAZIRLA</button>
+    </div>
+  </div>
+
+  <!-- 7. SHIP PLACEMENT SCREEN -->
+  <div id="screen-placement" class="screen" style="padding:0; overflow:hidden;">
+    <div class="top-bar">
+      <div id="placement-title" style="font-weight:bold; color:var(--accent-cyan); font-size:13px;">FİLONU YERLEŞTİR (30×30)</div>
+      <div id="placement-status" style="font-size:12px; color:var(--text-muted);">6 Gemi Kaldı</div>
+    </div>
+
+    <!-- Ship selection carousel -->
+    <div class="ship-dock" id="ship-dock"></div>
+
+    <!-- Placement Canvas Area -->
+    <div id="placement-viewport" style="flex:1; position:relative; overflow:hidden; touch-action:none;">
+      <canvas id="placement-canvas"></canvas>
+
+      <div class="coord-display" id="placement-coord-display">X: - | Y: -</div>
+
+      <div style="position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:6px; z-index:30;">
+        <button class="btn btn-sm" id="btn-place-rotate" style="background:rgba(0,0,0,0.65);">🔄 DÖNDÜR (<span id="txt-orientation">YATAY</span>)</button>
+        <button class="btn btn-sm" id="btn-place-zoom-reset" style="background:rgba(0,0,0,0.65);">🔍 SIFIRLA</button>
+      </div>
+    </div>
+
+    <div class="bottom-controls">
+      <button class="btn btn-sm" id="btn-place-auto">🎲 OTOMATİK</button>
+      <button class="btn btn-sm btn-danger" id="btn-place-clear">🗑️ TEMİZLE</button>
+      <button class="btn btn-sm" id="btn-place-undo">↩️ GERİ</button>
+      <button class="btn btn-sm btn-primary" id="btn-place-ready" disabled>✅ HAZIRIM</button>
+    </div>
+  </div>
+
+  <!-- 8. BATTLE SCREEN -->
+  <div id="screen-battle" class="screen" style="padding:0; overflow:hidden;">
+    <div class="top-bar">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="turn-pill" id="battle-turn-indicator">SIRA SİZDE</div>
+      </div>
+      <div id="battle-timer" style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted);">30×30 ARENA</div>
+    </div>
+
+    <!-- Target selector for 2-4 players -->
+    <div class="board-switch" id="board-switch-container">
+      <div class="board-tab active" data-target="own">🛡️ KENDİ FİLOM</div>
+    </div>
+
+    <div id="canvas-viewport">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Tactical Minimap Radar -->
+      <div class="minimap-container" id="minimap-wrapper">
+        <canvas id="minimap-canvas"></canvas>
+      </div>
+
+      <!-- Live Coordinate Info -->
+      <div class="coord-display" id="battle-coord-display">X: - | Y: - (HEDEF SEÇİN)</div>
+
+      <!-- Zoom and Action Overlays -->
+      <div style="position:absolute; top:12px; right:12px; display:flex; flex-direction:column; gap:6px; z-index:25;">
+        <button class="btn btn-sm" id="btn-zoom-in" style="min-height:36px; width:36px; padding:0;">➕</button>
+        <button class="btn btn-sm" id="btn-zoom-out" style="min-height:36px; width:36px; padding:0;">➖</button>
+        <button class="btn btn-sm" id="btn-center-board" style="min-height:36px; width:36px; padding:0;">🎯</button>
+      </div>
+    </div>
+
+    <div class="bottom-controls">
+      <div id="battle-info-text" style="font-size:12px; color:var(--text-muted); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+        Hedefe dokunarak nişan alın.
+      </div>
+      <button class="btn btn-accent" id="btn-fire-action" disabled>🔥 ATEŞ ET</button>
+    </div>
+  </div>
+
+  <!-- 9. PASS & PLAY INTERMEDIARY SCREEN -->
+  <div id="screen-pass-device" class="screen" style="justify-content:center; align-items:center; text-align:center;">
+    <div class="hud-card" style="max-width:360px; width:100%; padding:30px 20px;">
+      <div style="font-size:40px; margin-bottom:16px;">📱 ➡️ 👤</div>
+      <div class="title-glitch" style="font-size:22px;">CİHAZI DEVREDİN</div>
+      <div id="pass-device-player-name" style="font-size:18px; color:var(--accent-green); font-weight:bold; margin:14px 0;">Sıradaki: Amiral 2</div>
+      <p style="color:var(--text-muted); font-size:13px; margin-bottom:24px;">
+        Hamlenizi gizlemek için ekran gizlendi. Sıradaki oyuncu hazır olduğunda devam edin.
+      </p>
+      <button class="btn btn-primary" id="btn-pass-device-continue" style="width:100%;">HAZIRIM, DEVAM ET</button>
+    </div>
+  </div>
+
+  <!-- 10. SETTINGS SCREEN -->
+  <div id="screen-settings" class="screen">
+    <div class="title-glitch" style="font-size: 22px;">AYARLAR</div>
+    <div class="subtitle">Oyun ve Ses Tercihleri</div>
+
+    <div class="hud-card">
+      <div class="setting-row">
+        <span>Ses Efektleri</span>
+        <div class="toggle-switch on" id="toggle-audio"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="setting-row">
+        <span>Titreşim (Haptic)</span>
+        <div class="toggle-switch on" id="toggle-vibrate"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="setting-row">
+        <span>Grid Koordinat İsimleri (A..AD)</span>
+        <div class="toggle-switch on" id="toggle-coords"><div class="toggle-knob"></div></div>
+      </div>
+    </div>
+
+    <div class="hud-card" style="font-size:12px; color:var(--text-muted);">
+      <b>Sistem Durumu:</b>
+      <div id="settings-device-status" style="margin-top:6px; color:#fff; line-height:1.6;">Kontrol ediliyor...</div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:auto;">
+      <button class="btn btn-primary" style="flex:1;" id="btn-settings-back">KAYDET VE DÖN</button>
+    </div>
+  </div>
+
+  <!-- 11. MODAL DIALOG -->
+  <div class="modal-backdrop" id="generic-modal">
+    <div class="modal-content">
+      <div id="modal-title" class="title-glitch" style="font-size:22px;">BİLDİRİM</div>
+      <div id="modal-body" style="margin:16px 0; font-size:14px; color:var(--text-main); line-height:1.5;">-</div>
+      <div id="modal-actions" style="display:flex; gap:8px; justify-content:center;">
+        <button class="btn btn-primary" id="btn-modal-ok">TAMAM</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ==========================================
+// CONFIG & CONSTANTS
+// ==========================================
+const BOARD_SIZE = 30; // 30x30 = 900 Cells
+const CELL_SIZE_BASE = 42; // Virtual base size
+
+// Column headers: A..Z, AA, AB, AC, AD (1..30)
+const COL_NAMES = [];
+for (let i = 0; i < 26; i++) COL_NAMES.push(String.fromCharCode(65 + i)); // A-Z
+COL_NAMES.push("AA", "AB", "AC", "AD"); // 27, 28, 29, 30
+
+function getCoordLabel(x, y) {
+  if (x < 1 || x > 30 || y < 1 || y > 30) return "-";
+  const col = COL_NAMES[x - 1] || `${x}`;
+  return `${col}${y}`;
+}
+
+// Fleet definition for 30x30 board
+const FLEET_DEFINITIONS = [
+  { id: "amiral", name: "Amiral Gemisi", size: 6, count: 1, color: "#00e5ff" },
+  { id: "ucak", name: "Uçak Gemisi", size: 5, count: 1, color: "#00b4d8" },
+  { id: "savas", name: "Savaş Gemisi", size: 4, count: 1, color: "#ffb300" },
+  { id: "kruvazor", name: "Kruvazör", size: 3, count: 1, color: "#ff9100" },
+  { id: "muhrip", name: "Muhrip", size: 2, count: 2, color: "#00e676" }
+];
+
+// Cell States
+const CELL_EMPTY = 0;
+const CELL_SHIP = 1;
+const CELL_MISS = 2;
+const CELL_HIT = 3;
+const CELL_SUNK = 4;
+
+// ==========================================
+// AUDIO ENGINE (Web Audio API Synthesizer)
+// ==========================================
+class AudioEngine {
+  constructor() {
+    this.enabled = true;
+    this.ctx = null;
+  }
+
+  init() {
+    if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === "suspended") {
+      this.ctx.resume();
+    }
+  }
+
+  playTone(freq, type, duration, gainVal = 0.15) {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch(e) {}
+  }
+
+  playClick() {
+    this.playTone(800, "sine", 0.05, 0.1);
+  }
+
+  playCannon() {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.35);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(320, this.ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.35);
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      noise.start();
+    } catch(e) {}
+  }
+
+  playMiss() {
+    this.playTone(180, "sine", 0.3, 0.2);
+    setTimeout(() => this.playTone(130, "triangle", 0.25, 0.15), 70);
+  }
+
+  playHit() {
+    this.playCannon();
+    setTimeout(() => this.playTone(520, "sawtooth", 0.2, 0.25), 40);
+  }
+
+  playSunk() {
+    this.playTone(400, "square", 0.15, 0.2);
+    setTimeout(() => this.playTone(600, "square", 0.25, 0.2), 140);
+    setTimeout(() => this.playCannon(), 280);
+  }
+
+  playVictory() {
+    const notes = [261.63, 329.63, 392.00, 523.25];
+    notes.forEach((n, idx) => {
+      setTimeout(() => this.playTone(n, "triangle", 0.3, 0.3), idx * 130);
+    });
+  }
+
+  playDefeat() {
+    const notes = [300, 260, 220, 160];
+    notes.forEach((n, idx) => {
+      setTimeout(() => this.playTone(n, "sawtooth", 0.35, 0.25), idx * 150);
+    });
+  }
+}
+
+const audio = new AudioEngine();
+
+function triggerHaptic(ms = 30) {
+  try {
+    if (navigator && navigator.vibrate) {
+      navigator.vibrate(ms);
+    }
+  } catch(e) {}
+}
+
+function showToast(msg) {
+  const toast = document.getElementById("floating-toast");
+  toast.innerText = msg;
+  toast.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2200);
+}
+
+// ==========================================
+// STATE MANAGEMENT
+// ==========================================
+const State = {
+  playerName: "Amiral 1",
+  currentScreen: "splash",
+  gameMode: "ai", // "ai", "local", "bluetooth", "webrtc"
+  aiDifficulty: "medium",
+  totalPlayers: 2,
+  myPlayerId: 1,
+  currentTurnPlayerId: 1,
+  placementCurrentPlayerId: 1,
+  players: [], // [{ id, name, isHost, isReady, isAlive, ownGrid, ships, aiInstance }]
+  activeTargetPlayerId: 2, // Which enemy board is being inspected
+  placement: {
+    shipsToPlace: [],
+    placedShips: [],
+    selectedShipIndex: 0,
+    isHorizontal: true,
+    history: []
+  },
+  selectedCell: { x: -1, y: -1 },
+  gameOver: false,
+  winnerId: null
+};
+
+// ==========================================
+// 30x30 BOARD & SHIP ENGINE
+// ==========================================
+class BoardEngine {
+  static createEmptyGrid() {
+    const grid = [];
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      grid.push(new Uint8Array(BOARD_SIZE));
+    }
+    return grid;
+  }
+
+  static canPlaceShip(grid, size, startX, startY, isHorizontal) {
+    if (isHorizontal) {
+      if (startX + size > BOARD_SIZE) return false;
+      for (let i = 0; i < size; i++) {
+        if (grid[startY][startX + i] !== CELL_EMPTY) return false;
+      }
+    } else {
+      if (startY + size > BOARD_SIZE) return false;
+      for (let i = 0; i < size; i++) {
+        if (grid[startY + i][startX] !== CELL_EMPTY) return false;
+      }
+    }
+    return true;
+  }
+
+  static placeShip(grid, shipObj, startX, startY, isHorizontal) {
+    const coordinates = [];
+    for (let i = 0; i < shipObj.size; i++) {
+      const cx = isHorizontal ? startX + i : startX;
+      const cy = isHorizontal ? startY : startY + i;
+      grid[cy][cx] = CELL_SHIP;
+      coordinates.push({ x: cx + 1, y: cy + 1, hit: false }); // 1-indexed
+    }
+    return {
+      id: shipObj.id + "_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      name: shipObj.name,
+      size: shipObj.size,
+      color: shipObj.color,
+      startX: startX + 1,
+      startY: startY + 1,
+      isHorizontal,
+      coordinates,
+      isSunk: false
+    };
+  }
+
+  static autoPlaceAllShips(fleetDefs) {
+    const grid = this.createEmptyGrid();
+    const placedShips = [];
+
+    const shipsQueue = [];
+    fleetDefs.forEach(def => {
+      for (let i = 0; i < def.count; i++) {
+        shipsQueue.push({ ...def });
+      }
+    });
+
+    shipsQueue.sort((a, b) => b.size - a.size);
+
+    for (const ship of shipsQueue) {
+      let placed = false;
+      let attempts = 0;
+      while (!placed && attempts < 1500) {
+        attempts++;
+        const isHorizontal = Math.random() < 0.5;
+        const maxStartX = isHorizontal ? BOARD_SIZE - ship.size : BOARD_SIZE - 1;
+        const maxStartY = isHorizontal ? BOARD_SIZE - 1 : BOARD_SIZE - ship.size;
+        const startX = Math.floor(Math.random() * (maxStartX + 1));
+        const startY = Math.floor(Math.random() * (maxStartY + 1));
+
+        if (this.canPlaceShip(grid, ship.size, startX, startY, isHorizontal)) {
+          const placedShip = this.placeShip(grid, ship, startX, startY, isHorizontal);
+          placedShips.push(placedShip);
+          placed = true;
+        }
+      }
+    }
+    return { grid, placedShips };
+  }
+
+  static processShot(targetPlayer, x, y) {
+    const gx = x - 1;
+    const gy = y - 1;
+
+    if (!targetPlayer || !targetPlayer.ownGrid) {
+      return { status: "ERROR", x, y };
+    }
+
+    const currentTargetStatus = targetPlayer.ownGrid[gy][gx];
+    if (currentTargetStatus === CELL_HIT || currentTargetStatus === CELL_MISS || currentTargetStatus === CELL_SUNK) {
+      return { status: "ALREADY_SHOT", x, y };
+    }
+
+    let isHit = false;
+    let sunkShip = null;
+
+    if (targetPlayer.ships) {
+      for (const ship of targetPlayer.ships) {
+        for (const coord of ship.coordinates) {
+          if (coord.x === x && coord.y === y) {
+            coord.hit = true;
+            isHit = true;
+            targetPlayer.ownGrid[gy][gx] = CELL_HIT;
+
+            const allHit = ship.coordinates.every(c => c.hit);
+            if (allHit) {
+              ship.isSunk = true;
+              sunkShip = ship;
+              ship.coordinates.forEach(c => {
+                targetPlayer.ownGrid[c.y - 1][c.x - 1] = CELL_SUNK;
+              });
+            }
+            break;
+          }
+        }
+        if (isHit) break;
+      }
+    }
+
+    if (!isHit) {
+      targetPlayer.ownGrid[gy][gx] = CELL_MISS;
+    }
+
+    const allShipsSunk = targetPlayer.ships ? targetPlayer.ships.every(s => s.isSunk) : false;
+    if (allShipsSunk) {
+      targetPlayer.isAlive = false;
+    }
+
+    return {
+      status: sunkShip ? "SUNK" : (isHit ? "HIT" : "MISS"),
+      x,
+      y,
+      sunkShip,
+      playerEliminated: !targetPlayer.isAlive,
+      targetPlayerId: targetPlayer.id
+    };
+  }
+}
+
+// ==========================================
+// 30x30 SMART AI ENGINE
+// ==========================================
+class BattleshipAI {
+  constructor(playerObj, difficulty = "medium") {
+    this.player = playerObj;
+    this.difficulty = difficulty;
+    this.targetQueue = [];
+  }
+
+  init() {
+    const { grid, placedShips } = BoardEngine.autoPlaceAllShips(FLEET_DEFINITIONS);
+    this.player.ownGrid = grid;
+    this.player.ships = placedShips;
+  }
+
+  getNextShot(targetPlayer) {
+    if (this.difficulty === "easy") {
+      return this.getRandomShot(targetPlayer);
+    } else if (this.difficulty === "medium") {
+      return this.getMediumShot(targetPlayer);
+    } else {
+      return this.getHardShot(targetPlayer);
+    }
+  }
+
+  isValidTarget(grid, gx, gy) {
+    if (gx < 0 || gx >= BOARD_SIZE || gy < 0 || gy >= BOARD_SIZE) return false;
+    const val = grid[gy][gx];
+    return val !== CELL_HIT && val !== CELL_MISS && val !== CELL_SUNK;
+  }
+
+  getRandomShot(targetPlayer) {
+    let attempts = 0;
+    while (attempts < 2000) {
+      attempts++;
+      const gx = Math.floor(Math.random() * BOARD_SIZE);
+      const gy = Math.floor(Math.random() * BOARD_SIZE);
+      if (this.isValidTarget(targetPlayer.ownGrid, gx, gy)) {
+        return { x: gx + 1, y: gy + 1 };
+      }
+    }
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        if (this.isValidTarget(targetPlayer.ownGrid, c, r)) {
+          return { x: c + 1, y: r + 1 };
+        }
+      }
+    }
+    return { x: 1, y: 1 };
+  }
+
+  getMediumShot(targetPlayer) {
+    while (this.targetQueue.length > 0) {
+      const candidate = this.targetQueue.shift();
+      if (this.isValidTarget(targetPlayer.ownGrid, candidate.x - 1, candidate.y - 1)) {
+        return candidate;
+      }
+    }
+
+    const candidates = [];
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        if ((r + c) % 2 === 0 && this.isValidTarget(targetPlayer.ownGrid, c, r)) {
+          candidates.push({ x: c + 1, y: r + 1 });
+        }
+      }
+    }
+
+    if (candidates.length > 0) {
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    return this.getRandomShot(targetPlayer);
+  }
+
+  getHardShot(targetPlayer) {
+    while (this.targetQueue.length > 0) {
+      const candidate = this.targetQueue.shift();
+      if (this.isValidTarget(targetPlayer.ownGrid, candidate.x - 1, candidate.y - 1)) {
+        return candidate;
+      }
+    }
+
+    const heatmap = [];
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      heatmap.push(new Float32Array(BOARD_SIZE));
+    }
+
+    const remainingShipSizes = (targetPlayer.ships || []).filter(s => !s.isSunk).map(s => s.size);
+    if (remainingShipSizes.length === 0) remainingShipSizes.push(2, 3, 4, 5, 6);
+
+    for (const size of remainingShipSizes) {
+      // Horizontal
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c <= BOARD_SIZE - size; c++) {
+          let canFit = true;
+          let weight = 1;
+          for (let i = 0; i < size; i++) {
+            const cell = targetPlayer.ownGrid[r][c + i];
+            if (cell === CELL_MISS || cell === CELL_SUNK) {
+              canFit = false;
+              break;
+            }
+            if (cell === CELL_HIT) weight += 6;
+          }
+          if (canFit) {
+            for (let i = 0; i < size; i++) {
+              if (this.isValidTarget(targetPlayer.ownGrid, c + i, r)) {
+                heatmap[r][c + i] += weight;
+              }
+            }
+          }
+        }
+      }
+
+      // Vertical
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        for (let r = 0; r <= BOARD_SIZE - size; r++) {
+          let canFit = true;
+          let weight = 1;
+          for (let i = 0; i < size; i++) {
+            const cell = targetPlayer.ownGrid[r + i][c];
+            if (cell === CELL_MISS || cell === CELL_SUNK) {
+              canFit = false;
+              break;
+            }
+            if (cell === CELL_HIT) weight += 6;
+          }
+          if (canFit) {
+            for (let i = 0; i < size; i++) {
+              if (this.isValidTarget(targetPlayer.ownGrid, c, r + i)) {
+                heatmap[r + i][c] += weight;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    let maxVal = -1;
+    let bestCells = [];
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        if (this.isValidTarget(targetPlayer.ownGrid, c, r)) {
+          if (heatmap[r][c] > maxVal) {
+            maxVal = heatmap[r][c];
+            bestCells = [{ x: c + 1, y: r + 1 }];
+          } else if (heatmap[r][c] === maxVal) {
+            bestCells.push({ x: c + 1, y: r + 1 });
+          }
+        }
+      }
+    }
+
+    if (bestCells.length > 0) {
+      return bestCells[Math.floor(Math.random() * bestCells.length)];
+    }
+
+    return this.getRandomShot(targetPlayer);
+  }
+
+  onShotResult(result) {
+    if (result.status === "HIT") {
+      const x = result.x;
+      const y = result.y;
+      const neighbors = [
+        { x: x + 1, y },
+        { x: x - 1, y },
+        { x, y: y + 1 },
+        { x, y: y - 1 }
+      ];
+      neighbors.forEach(n => {
+        if (n.x >= 1 && n.x <= BOARD_SIZE && n.y >= 1 && n.y <= BOARD_SIZE) {
+          this.targetQueue.unshift(n);
+        }
+      });
+    } else if (result.status === "SUNK" && result.sunkShip) {
+      this.targetQueue = this.targetQueue.filter(t => {
+        const inSunk = result.sunkShip.coordinates.some(c => c.x === t.x && c.y === t.y);
+        return !inSunk;
+      });
+    }
+  }
+}
+
+// ==========================================
+// CONNECTION & NETWORK PROTOCOL
+// ==========================================
+class ConnectionManager {
+  constructor() {
+    this.transportType = "local";
+  }
+
+  send(messageObj) {
+    if (this.transportType === "bluetooth" && window.AndroidBluetooth) {
+      try {
+        window.AndroidBluetooth.sendMessage(JSON.stringify(messageObj));
+      } catch(e) {
+        console.error("BT send error", e);
+      }
+    }
+  }
+
+  receive(data) {
+    if (!data || !data.type) return;
+
+    if (data.type === "LOBBY_JOIN") {
+      if (State.players.length < State.totalPlayers) {
+        const newPlayer = {
+          id: State.players.length + 1,
+          name: data.name || `Amiral ${State.players.length + 1}`,
+          isHost: false,
+          isReady: false,
+          isAlive: true,
+          ships: [],
+          ownGrid: null
+        };
+        State.players.push(newPlayer);
+        renderLobbyUI();
+        this.send({ type: "LOBBY_UPDATE", players: State.players });
+      }
+    } else if (data.type === "LOBBY_UPDATE") {
+      State.players = data.players;
+      renderLobbyUI();
+    } else if (data.type === "START_PLACEMENT") {
+      initPlacementPhase();
+    } else if (data.type === "FIRE_SHOT") {
+      handleRemoteShot(data);
+    } else if (data.type === "SHOT_RESULT") {
+      handleRemoteShotResult(data);
+    }
+  }
+}
+
+const network = new ConnectionManager();
+
+window.onAndroidBluetoothMessage = function(jsonString) {
+  try {
+    const data = JSON.parse(jsonString);
+    network.receive(data);
+  } catch(e) {
+    console.error("Bridge parse error:", e);
+  }
+};
+
+window.onAndroidBluetoothStatus = function(status, isConnected) {
+  const statusBox = document.getElementById("join-status-box");
+  if (statusBox) statusBox.innerHTML = status;
+};
+
+window.onAndroidBluetoothDeviceDiscovered = function(deviceObj) {
+  addDiscoveredDeviceUI(deviceObj);
+};
+
+// ==========================================
+// CANVAS INTERACTION & RENDERING ENGINE
+// ==========================================
+class CanvasRenderer {
+  constructor(canvasId, isPlacement = false) {
+    this.canvas = document.getElementById(canvasId);
+    this.ctx = this.canvas.getContext("2d");
+    this.isPlacement = isPlacement;
+
+    this.scale = 1.0;
+    this.minScale = 0.35;
+    this.maxScale = 3.2;
+    this.offsetX = 0;
+    this.offsetY = 0;
+
+    this.isDragging = false;
+    this.hasMoved = false;
+    this.startX = 0;
+    this.startY = 0;
+    this.lastTouchX = 0;
+    this.lastTouchY = 0;
+    this.pinchStartDistance = 0;
+    this.pinchStartScale = 1.0;
+    this.lastTapTime = 0;
+
+    this.selectedCell = { x: -1, y: -1 };
+
+    this.initEvents();
+    this.resize();
+  }
+
+  resize() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
+    this.canvas.style.width = rect.width + "px";
+    this.canvas.style.height = rect.height + "px";
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.scale(dpr, dpr);
+    this.fitBoardToScreen();
+    this.render();
+  }
+
+  fitBoardToScreen() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    const boardPixelSize = BOARD_SIZE * CELL_SIZE_BASE + 60;
+    this.scale = Math.min(rect.width / boardPixelSize, rect.height / boardPixelSize) * 0.96;
+    if (this.scale < this.minScale) this.scale = this.minScale;
+    this.offsetX = (rect.width - BOARD_SIZE * CELL_SIZE_BASE * this.scale) / 2;
+    this.offsetY = (rect.height - BOARD_SIZE * CELL_SIZE_BASE * this.scale) / 2;
+  }
+
+  initEvents() {
+    window.addEventListener("resize", () => this.resize());
+    const vp = this.canvas;
+
+    vp.addEventListener("pointerdown", (e) => {
+      this.isDragging = true;
+      this.hasMoved = false;
+      this.startX = e.clientX;
+      this.startY = e.clientY;
+      this.lastTouchX = e.clientX;
+      this.lastTouchY = e.clientY;
+      try { vp.setPointerCapture(e.pointerId); } catch(err){}
+    });
+
+    vp.addEventListener("pointermove", (e) => {
+      if (!this.isDragging) return;
+      const dx = e.clientX - this.lastTouchX;
+      const dy = e.clientY - this.lastTouchY;
+      if (Math.hypot(e.clientX - this.startX, e.clientY - this.startY) > 6) {
+        this.hasMoved = true;
+      }
+      this.offsetX += dx;
+      this.offsetY += dy;
+      this.lastTouchX = e.clientX;
+      this.lastTouchY = e.clientY;
+      this.render();
+    });
+
+    vp.addEventListener("pointerup", (e) => {
+      if (this.isDragging && !this.hasMoved) {
+        this.handleClickAt(e.clientX, e.clientY);
+      }
+      this.isDragging = false;
+      try { vp.releasePointerCapture(e.pointerId); } catch(err){}
+    });
+
+    vp.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        this.pinchStartDistance = Math.hypot(dx, dy);
+        this.pinchStartScale = this.scale;
+      } else if (e.touches.length === 1) {
+        const now = Date.now();
+        if (now - this.lastTapTime < 280) {
+          this.scale = (this.scale > 1.1) ? this.minScale * 1.4 : 1.8;
+          this.render();
+        }
+        this.lastTapTime = now;
+      }
+    }, { passive: true });
+
+    vp.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 2 && this.pinchStartDistance > 0) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const factor = dist / this.pinchStartDistance;
+        this.scale = Math.max(this.minScale, Math.min(this.maxScale, this.pinchStartScale * factor));
+        this.render();
+      }
+    }, { passive: true });
+
+    vp.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.12 : 0.88;
+      this.scale = Math.max(this.minScale, Math.min(this.maxScale, this.scale * factor));
+      this.render();
+    }, { passive: false });
+  }
+
+  handleClickAt(clientX, clientY) {
+    const rect = this.canvas.getBoundingClientRect();
+    const clickX = clientX - rect.left;
+    const clickY = clientY - rect.top;
+
+    const worldX = (clickX - this.offsetX) / this.scale;
+    const worldY = (clickY - this.offsetY) / this.scale;
+
+    const cellX = Math.floor(worldX / CELL_SIZE_BASE) + 1;
+    const cellY = Math.floor(worldY / CELL_SIZE_BASE) + 1;
+
+    if (cellX >= 1 && cellX <= BOARD_SIZE && cellY >= 1 && cellY <= BOARD_SIZE) {
+      this.selectedCell = { x: cellX, y: cellY };
+      audio.playClick();
+      triggerHaptic(20);
+      this.onCellClicked(cellX, cellY);
+      this.render();
+    }
+  }
+
+  onCellClicked(x, y) {
+    const label = getCoordLabel(x, y);
+    if (this.isPlacement) {
+      document.getElementById("placement-coord-display").innerText = `Seçili: X=${x}, Y=${y} (${label})`;
+      handlePlacementGridClick(x, y);
+    } else {
+      document.getElementById("battle-coord-display").innerText = `Hedef: X=${x}, Y=${y} (${label})`;
+      handleBattleGridClick(x, y);
+    }
+  }
+
+  render() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    ctx.save();
+    ctx.translate(this.offsetX, this.offsetY);
+    ctx.scale(this.scale, this.scale);
+
+    // 1. Grid Background
+    ctx.fillStyle = "#061329";
+    ctx.fillRect(0, 0, BOARD_SIZE * CELL_SIZE_BASE, BOARD_SIZE * CELL_SIZE_BASE);
+
+    // 2. Grid Lines
+    for (let i = 0; i <= BOARD_SIZE; i++) {
+      const pos = i * CELL_SIZE_BASE;
+      ctx.strokeStyle = (i % 5 === 0) ? "rgba(0, 229, 255, 0.6)" : "rgba(0, 229, 255, 0.18)";
+      ctx.lineWidth = (i % 5 === 0) ? 1.5 : 0.8;
+
+      ctx.beginPath();
+      ctx.moveTo(pos, 0); ctx.lineTo(pos, BOARD_SIZE * CELL_SIZE_BASE);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, pos); ctx.lineTo(BOARD_SIZE * CELL_SIZE_BASE, pos);
+      ctx.stroke();
+    }
+
+    // 3. Headers (Columns & Rows)
+    ctx.fillStyle = "rgba(0, 229, 255, 0.75)";
+    ctx.font = "bold 11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const label = COL_NAMES[c] || `${c+1}`;
+      ctx.fillText(label, c * CELL_SIZE_BASE + CELL_SIZE_BASE / 2, -12);
+    }
+    ctx.textAlign = "right";
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      ctx.fillText(`${r+1}`, -8, r * CELL_SIZE_BASE + CELL_SIZE_BASE / 2);
+    }
+
+    // 4. Board Data
+    if (this.isPlacement) {
+      this.renderPlacementBoard(ctx);
+    } else {
+      this.renderBattleBoard(ctx);
+    }
+
+    // 5. Selected Reticle
+    if (this.selectedCell.x >= 1 && this.selectedCell.y >= 1) {
+      const sx = (this.selectedCell.x - 1) * CELL_SIZE_BASE;
+      const sy = (this.selectedCell.y - 1) * CELL_SIZE_BASE;
+      ctx.strokeStyle = "#ffea00";
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(sx + 2, sy + 2, CELL_SIZE_BASE - 4, CELL_SIZE_BASE - 4);
+      ctx.beginPath();
+      ctx.arc(sx + CELL_SIZE_BASE / 2, sy + CELL_SIZE_BASE / 2, CELL_SIZE_BASE / 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    if (!this.isPlacement) {
+      renderMinimap(this);
+    }
+  }
+
+  renderPlacementBoard(ctx) {
+    State.placement.placedShips.forEach(ship => {
+      ctx.fillStyle = ship.color || "#00e5ff";
+      ship.coordinates.forEach(coord => {
+        const x = (coord.x - 1) * CELL_SIZE_BASE;
+        const y = (coord.y - 1) * CELL_SIZE_BASE;
+        ctx.fillRect(x + 3, y + 3, CELL_SIZE_BASE - 6, CELL_SIZE_BASE - 6);
+      });
+    });
+  }
+
+  renderBattleBoard(ctx) {
+    const isOwnFleet = (State.activeTargetPlayerId === State.myPlayerId);
+    const player = State.players.find(p => p.id === State.activeTargetPlayerId);
+    if (!player || !player.ownGrid) return;
+
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        const cell = player.ownGrid[r][c];
+        const cx = c * CELL_SIZE_BASE;
+        const cy = r * CELL_SIZE_BASE;
+
+        if (isOwnFleet && cell === CELL_SHIP) {
+          ctx.fillStyle = "rgba(0, 229, 255, 0.6)";
+          ctx.fillRect(cx + 4, cy + 4, CELL_SIZE_BASE - 8, CELL_SIZE_BASE - 8);
+        } else if (cell === CELL_MISS) {
+          ctx.fillStyle = "#0284c7";
+          ctx.beginPath();
+          ctx.arc(cx + CELL_SIZE_BASE / 2, cy + CELL_SIZE_BASE / 2, 5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (cell === CELL_HIT) {
+          ctx.fillStyle = "rgba(255, 61, 0, 0.4)";
+          ctx.fillRect(cx + 2, cy + 2, CELL_SIZE_BASE - 4, CELL_SIZE_BASE - 4);
+          ctx.strokeStyle = "#ff3d00";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(cx + 6, cy + 6); ctx.lineTo(cx + CELL_SIZE_BASE - 6, cy + CELL_SIZE_BASE - 6);
+          ctx.moveTo(cx + CELL_SIZE_BASE - 6, cy + 6); ctx.lineTo(cx + 6, cy + CELL_SIZE_BASE - 6);
+          ctx.stroke();
+        } else if (cell === CELL_SUNK) {
+          ctx.fillStyle = "#990000";
+          ctx.fillRect(cx + 2, cy + 2, CELL_SIZE_BASE - 4, CELL_SIZE_BASE - 4);
+          ctx.strokeStyle = "#ffb300";
+          ctx.strokeRect(cx + 3, cy + 3, CELL_SIZE_BASE - 6, CELL_SIZE_BASE - 6);
+        }
+      }
+    }
+  }
+}
+
+function renderMinimap(renderer) {
+  const mCanvas = document.getElementById("minimap-canvas");
+  if (!mCanvas) return;
+  const mCtx = mCanvas.getContext("2d");
+  const size = 95;
+  mCanvas.width = size;
+  mCanvas.height = size;
+
+  mCtx.fillStyle = "rgba(6, 11, 25, 0.9)";
+  mCtx.fillRect(0, 0, size, size);
+
+  mCtx.strokeStyle = "rgba(0, 229, 255, 0.3)";
+  mCtx.lineWidth = 0.5;
+  mCtx.beginPath();
+  mCtx.moveTo(size / 2, 0); mCtx.lineTo(size / 2, size);
+  mCtx.moveTo(0, size / 2); mCtx.lineTo(size, size / 2);
+  mCtx.arc(size / 2, size / 2, size / 2 - 4, 0, Math.PI * 2);
+  mCtx.stroke();
+
+  const rect = renderer.canvas.parentElement.getBoundingClientRect();
+  const scale = renderer.scale;
+  const boardPx = BOARD_SIZE * CELL_SIZE_BASE * scale;
+  const vpX = (-renderer.offsetX / boardPx) * size;
+  const vpY = (-renderer.offsetY / boardPx) * size;
+  const vpW = (rect.width / boardPx) * size;
+  const vpH = (rect.height / boardPx) * size;
+
+  mCtx.strokeStyle = "#00e676";
+  mCtx.lineWidth = 1.5;
+  mCtx.strokeRect(vpX, vpY, vpW, vpH);
+}
+
+let placementRenderer = null;
+let battleRenderer = null;
+
+// ==========================================
+// UI FLOW & SCREEN SWITCHING
+// ==========================================
+function switchScreen(screenId) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  const target = document.getElementById("screen-" + screenId);
+  if (target) target.classList.add("active");
+  State.currentScreen = screenId;
+
+  if (screenId === "placement") {
+    setTimeout(() => {
+      if (!placementRenderer) {
+        placementRenderer = new CanvasRenderer("placement-canvas", true);
+      } else {
+        placementRenderer.resize();
+      }
+    }, 50);
+  } else if (screenId === "battle") {
+    setTimeout(() => {
+      if (!battleRenderer) {
+        battleRenderer = new CanvasRenderer("game-canvas", false);
+      } else {
+        battleRenderer.resize();
+      }
+      updateBattleTabs();
+    }, 50);
+  }
+}
+
+function showModal(title, message, okText = "TAMAM", onOk = null) {
+  document.getElementById("modal-title").innerText = title;
+  document.getElementById("modal-body").innerHTML = message;
+  const modal = document.getElementById("generic-modal");
+  modal.classList.add("active");
+
+  const btnOk = document.getElementById("btn-modal-ok");
+  btnOk.innerText = okText;
+  btnOk.onclick = () => {
+    modal.classList.remove("active");
+    if (onOk) onOk();
+  };
+}
+
+// ==========================================
+// SHIP PLACEMENT CONTROLS
+// ==========================================
+function initPlacementPhase(playerId = 1) {
+  State.placementCurrentPlayerId = playerId;
+  const currentPlayer = State.players.find(p => p.id === playerId);
+  document.getElementById("placement-title").innerText = `${currentPlayer ? currentPlayer.name : 'FİLO'} YERLEŞTİR (30×30)`;
+
+  State.placement.shipsToPlace = [];
+  FLEET_DEFINITIONS.forEach(def => {
+    for (let i = 0; i < def.count; i++) {
+      State.placement.shipsToPlace.push({ ...def, placed: false });
+    }
+  });
+  State.placement.placedShips = [];
+  State.placement.selectedShipIndex = 0;
+  State.placement.isHorizontal = true;
+  State.placement.history = [];
+
+  renderShipDock();
+  document.getElementById("btn-place-ready").disabled = true;
+  document.getElementById("txt-orientation").innerText = "YATAY";
+  switchScreen("placement");
+}
+
+function renderShipDock() {
+  const dock = document.getElementById("ship-dock");
+  dock.innerHTML = "";
+
+  State.placement.shipsToPlace.forEach((ship, idx) => {
+    const item = document.createElement("div");
+    item.className = "ship-item" + (idx === State.placement.selectedShipIndex ? " selected" : "") + (ship.placed ? " placed" : "");
+    item.innerHTML = `
+      <div style="font-weight:bold; font-size:12px; color:${ship.color};">${ship.name}</div>
+      <div style="font-size:11px; color:var(--text-muted);">${ship.size} Hücre</div>
+    `;
+    item.onclick = () => {
+      if (!ship.placed) {
+        State.placement.selectedShipIndex = idx;
+        audio.playClick();
+        renderShipDock();
+      }
+    };
+    dock.appendChild(item);
+  });
+
+  const remaining = State.placement.shipsToPlace.filter(s => !s.placed).length;
+  document.getElementById("placement-status").innerText = `${remaining} Gemi Kaldı`;
+  document.getElementById("btn-place-ready").disabled = (remaining > 0);
+}
+
+function handlePlacementGridClick(x, y) {
+  const shipIdx = State.placement.selectedShipIndex;
+  const shipDef = State.placement.shipsToPlace[shipIdx];
+  if (!shipDef || shipDef.placed) return;
+
+  const tempGrid = BoardEngine.createEmptyGrid();
+  State.placement.placedShips.forEach(s => {
+    s.coordinates.forEach(c => tempGrid[c.y - 1][c.x - 1] = CELL_SHIP);
+  });
+
+  const isH = State.placement.isHorizontal;
+  if (BoardEngine.canPlaceShip(tempGrid, shipDef.size, x - 1, y - 1, isH)) {
+    const placedShip = BoardEngine.placeShip(tempGrid, shipDef, x - 1, y - 1, isH);
+    State.placement.placedShips.push(placedShip);
+    shipDef.placed = true;
+    audio.playTone(440, "sine", 0.1, 0.2);
+
+    State.placement.history.push({ shipIdx, placedShip });
+
+    const nextIdx = State.placement.shipsToPlace.findIndex(s => !s.placed);
+    State.placement.selectedShipIndex = nextIdx !== -1 ? nextIdx : 0;
+
+    renderShipDock();
+    if (placementRenderer) placementRenderer.render();
+  } else {
+    audio.playTone(160, "square", 0.2, 0.25);
+    triggerHaptic(60);
+    showToast("⚠️ Çarpışma veya Saha Dışı!");
+  }
+}
+
+// ==========================================
+// BATTLE ARENA & TURN MANAGEMENT
+// ==========================================
+function startBattleGame() {
+  State.gameOver = false;
+  State.currentTurnPlayerId = 1;
+  State.activeTargetPlayerId = (State.myPlayerId === 1) ? 2 : 1;
+
+  updateBattleTabs();
+  updateTurnDisplay();
+  switchScreen("battle");
+}
+
+function updateBattleTabs() {
+  const container = document.getElementById("board-switch-container");
+  container.innerHTML = "";
+
+  // 1. Kendi Filom Tab
+  const ownTab = document.createElement("div");
+  ownTab.className = "board-tab" + (State.activeTargetPlayerId === State.myPlayerId ? " active" : "");
+  ownTab.innerText = "🛡️ KENDİ FİLOM";
+  ownTab.onclick = () => {
+    State.activeTargetPlayerId = State.myPlayerId;
+    audio.playClick();
+    updateBattleTabs();
+    if (battleRenderer) battleRenderer.render();
+  };
+  container.appendChild(ownTab);
+
+  // 2. Enemy tabs
+  State.players.forEach(p => {
+    if (p.id !== State.myPlayerId) {
+      const enemyTab = document.createElement("div");
+      const isAlive = p.isAlive;
+      enemyTab.className = "board-tab" + (State.activeTargetPlayerId === p.id ? " active" : "") + (!isAlive ? " badge-waiting" : "");
+      enemyTab.innerText = `🎯 ${p.name}` + (!isAlive ? " (ELENDİ)" : "");
+      enemyTab.onclick = () => {
+        State.activeTargetPlayerId = p.id;
+        audio.playClick();
+        updateBattleTabs();
+        if (battleRenderer) battleRenderer.render();
+      };
+      container.appendChild(enemyTab);
+    }
+  });
+}
+
+function updateTurnDisplay() {
+  const indicator = document.getElementById("battle-turn-indicator");
+  const isMyTurn = (State.currentTurnPlayerId === State.myPlayerId);
+  const currentPlayer = State.players.find(p => p.id === State.currentTurnPlayerId);
+
+  if (isMyTurn) {
+    indicator.className = "turn-pill my-turn";
+    indicator.innerText = "SIRA SİZDE! (HEDEF SEÇİN)";
+    document.getElementById("btn-fire-action").disabled = false;
+  } else {
+    indicator.className = "turn-pill";
+    indicator.innerText = `SIRA: ${currentPlayer ? currentPlayer.name : 'DÜŞMAN'}`;
+    document.getElementById("btn-fire-action").disabled = true;
+  }
+}
+
+function handleBattleGridClick(x, y) {
+  if (State.gameOver) return;
+  if (State.activeTargetPlayerId === State.myPlayerId) {
+    showToast("⚠️ Kendi filonuza ateş edemezsiniz!");
+    return;
+  }
+
+  const targetPlayer = State.players.find(p => p.id === State.activeTargetPlayerId);
+  if (!targetPlayer || !targetPlayer.isAlive) {
+    showToast("⚠️ Bu oyuncu elenmiştir!");
+    return;
+  }
+
+  document.getElementById("battle-info-text").innerText = `Hedef: ${getCoordLabel(x,y)} seçildi. Ateş butonuna basın.`;
+}
+
+function executeFireAction() {
+  if (State.currentTurnPlayerId !== State.myPlayerId || State.gameOver) return;
+  if (State.activeTargetPlayerId === State.myPlayerId) return;
+
+  const { x, y } = (battleRenderer ? battleRenderer.selectedCell : { x: -1, y: -1 });
+  if (x < 1 || x > 30 || y < 1 || y > 30) {
+    showToast("⚠️ Lütfen hedef bir kare seçin!");
+    return;
+  }
+
+  const targetPlayer = State.players.find(p => p.id === State.activeTargetPlayerId);
+  if (!targetPlayer || !targetPlayer.isAlive) return;
+
+  const result = BoardEngine.processShot(targetPlayer, x, y);
+  if (result.status === "ALREADY_SHOT") {
+    showToast("⚠️ Bu koordinata daha önce ateş ettiniz!");
+    return;
+  }
+
+  triggerHaptic(40);
+
+  if (result.status === "HIT") {
+    audio.playHit();
+    showToast(`🎯 İSABET! ${getCoordLabel(x, y)}`);
+  } else if (result.status === "SUNK") {
+    audio.playSunk();
+    showToast(`💥 GEMİ BATTI! ${result.sunkShip.name}`);
+  } else {
+    audio.playMiss();
+    showToast(`🌊 ISKA: ${getCoordLabel(x, y)}`);
+  }
+
+  if (battleRenderer) battleRenderer.render();
+
+  checkVictoryCondition();
+
+  if (!State.gameOver) {
+    advanceTurn();
+  }
+}
+
+function advanceTurn() {
+  let nextId = State.currentTurnPlayerId;
+  let attempts = 0;
+  do {
+    nextId = (nextId % State.totalPlayers) + 1;
+    attempts++;
+  } while (!State.players.find(p => p.id === nextId && p.isAlive) && attempts < 10);
+
+  State.currentTurnPlayerId = nextId;
+
+  if (State.gameMode === "local") {
+    // Pass and Play mode: hand device over to next player
+    State.myPlayerId = nextId;
+    const nextPlayer = State.players.find(p => p.id === nextId);
+    // Find enemy to target
+    const enemy = State.players.find(p => p.id !== nextId && p.isAlive);
+    if (enemy) State.activeTargetPlayerId = enemy.id;
+
+    document.getElementById("pass-device-player-name").innerText = `Sıradaki: ${nextPlayer ? nextPlayer.name : 'Amiral'}`;
+    switchScreen("pass-device");
+  } else {
+    updateTurnDisplay();
+    if (battleRenderer) battleRenderer.render();
+
+    // AI Move
+    if (State.gameMode === "ai" && State.currentTurnPlayerId !== State.myPlayerId) {
+      setTimeout(() => {
+        runAIMove(State.currentTurnPlayerId);
+      }, 1000);
+    }
+  }
+}
+
+function runAIMove(aiPlayerId) {
+  if (State.gameOver) return;
+  const aiPlayer = State.players.find(p => p.id === aiPlayerId);
+  if (!aiPlayer || !aiPlayer.isAlive || !aiPlayer.aiInstance) return;
+
+  const targetPlayer = State.players.find(p => p.id === State.myPlayerId && p.isAlive) || State.players.find(p => p.id !== aiPlayerId && p.isAlive);
+  if (!targetPlayer) return;
+
+  const shot = aiPlayer.aiInstance.getNextShot(targetPlayer);
+  const result = BoardEngine.processShot(targetPlayer, shot.x, shot.y);
+  aiPlayer.aiInstance.onShotResult(result);
+
+  if (result.status === "HIT" || result.status === "SUNK") {
+    audio.playHit();
+  } else {
+    audio.playMiss();
+  }
+
+  showToast(`${aiPlayer.name} ➡️ ${getCoordLabel(shot.x, shot.y)} (${result.status === 'HIT' ? 'İSABET' : (result.status === 'SUNK' ? 'GEMİ BATTI' : 'ISKA')})`);
+
+  if (battleRenderer) battleRenderer.render();
+  checkVictoryCondition();
+
+  if (!State.gameOver) {
+    advanceTurn();
+  }
+}
+
+function checkVictoryCondition() {
+  const livingPlayers = State.players.filter(p => p.isAlive);
+  if (livingPlayers.length <= 1 && livingPlayers.length > 0) {
+    State.gameOver = true;
+    State.winnerId = livingPlayers[0].id;
+    const isMe = (State.winnerId === State.myPlayerId);
+
+    if (isMe) {
+      audio.playVictory();
+      showModal("ZAFER! 🏆", `Tebrikler Amiral! 30×30 Deniz Muharebesini Kazandınız!`, "ANA MENÜ", () => switchScreen("menu"));
+    } else {
+      audio.playDefeat();
+      showModal("YENİLGİ ⚓", `Filolarınız batırıldı. Kazanan: ${livingPlayers[0].name}`, "ANA MENÜ", () => switchScreen("menu"));
+    }
+  } else {
+    const myPlayer = State.players.find(p => p.id === State.myPlayerId);
+    if (myPlayer && !myPlayer.isAlive) {
+      showModal("ELENDİNİZ!", "Tüm gemileriniz batırıldı. Savaşı izleyebilirsiniz.", "DEVAM ET");
+    }
+  }
+}
+
+// ==========================================
+// EVENT LISTENERS & SETUP
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    switchScreen("menu");
+  }, 1000);
+
+  // Main Menu
+  document.getElementById("btn-menu-ai").onclick = () => {
+    audio.playClick();
+    switchScreen("ai-setup");
+  };
+
+  document.getElementById("btn-menu-create").onclick = () => {
+    audio.playClick();
+    switchScreen("create");
+  };
+
+  document.getElementById("btn-menu-join").onclick = () => {
+    audio.playClick();
+    switchScreen("join");
+    refreshPairedDevices();
+  };
+
+  document.getElementById("btn-menu-settings").onclick = () => {
+    audio.playClick();
+    switchScreen("settings");
+    updateSettingsStatus();
+  };
+
+  // Create Screen
+  document.querySelectorAll(".player-count-opt").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".player-count-opt").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      State.totalPlayers = parseInt(btn.dataset.count);
+      audio.playClick();
+    };
+  });
+
+  document.getElementById("btn-create-back").onclick = () => { audio.playClick(); switchScreen("menu"); };
+  document.getElementById("btn-create-confirm").onclick = () => {
+    audio.playClick();
+    const hostName = document.getElementById("input-host-name").value.trim() || "Amiral 1";
+    const transportType = document.getElementById("select-transport-type").value;
+    State.playerName = hostName;
+    State.gameMode = transportType;
+    network.transportType = transportType;
+
+    if (transportType === "bluetooth" && window.AndroidBluetooth) {
+      window.AndroidBluetooth.startServer();
+    }
+
+    setupLobby(true);
+  };
+
+  // Join Screen
+  document.getElementById("btn-join-back").onclick = () => { audio.playClick(); switchScreen("menu"); };
+  document.getElementById("btn-refresh-devices").onclick = () => {
+    audio.playClick();
+    refreshPairedDevices();
+  };
+  document.getElementById("btn-scan-discovery").onclick = () => {
+    audio.playClick();
+    if (window.AndroidBluetooth) {
+      window.AndroidBluetooth.startDiscovery();
+      showToast("🔍 Çevredeki cihazlar aranıyor...");
+    } else {
+      showToast("⚠️ Android Bluetooth Köprüsü bulunamadı.");
+    }
+  };
+
+  // AI Setup
+  document.querySelectorAll(".ai-diff-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".ai-diff-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      State.aiDifficulty = btn.dataset.diff;
+      audio.playClick();
+    };
+  });
+
+  document.querySelectorAll(".ai-count-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".ai-count-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      State.totalPlayers = parseInt(btn.dataset.count);
+      audio.playClick();
+    };
+  });
+
+  document.getElementById("btn-ai-back").onclick = () => { audio.playClick(); switchScreen("menu"); };
+  document.getElementById("btn-ai-start").onclick = () => {
+    audio.playClick();
+    State.gameMode = "ai";
+    State.myPlayerId = 1;
+
+    State.players = [
+      { id: 1, name: State.playerName || "Amiral", isHost: true, isReady: false, isAlive: true, ships: [], ownGrid: null }
+    ];
+
+    for (let i = 2; i <= State.totalPlayers; i++) {
+      const aiPlayer = {
+        id: i,
+        name: `AI Bot ${i - 1}`,
+        isHost: false,
+        isReady: true,
+        isAlive: true,
+        ships: [],
+        ownGrid: null
+      };
+      aiPlayer.aiInstance = new BattleshipAI(aiPlayer, State.aiDifficulty);
+      aiPlayer.aiInstance.init();
+      State.players.push(aiPlayer);
+    }
+
+    initPlacementPhase(1);
+  };
+
+  // Placement Phase
+  document.getElementById("btn-place-rotate").onclick = () => {
+    State.placement.isHorizontal = !State.placement.isHorizontal;
+    document.getElementById("txt-orientation").innerText = State.placement.isHorizontal ? "YATAY" : "DİKEY";
+    audio.playClick();
+  };
+
+  document.getElementById("btn-place-auto").onclick = () => {
+    audio.playClick();
+    const { grid, placedShips } = BoardEngine.autoPlaceAllShips(FLEET_DEFINITIONS);
+    State.placement.placedShips = placedShips;
+    State.placement.shipsToPlace.forEach(s => s.placed = true);
+    renderShipDock();
+    if (placementRenderer) placementRenderer.render();
+  };
+
+  document.getElementById("btn-place-clear").onclick = () => {
+    audio.playClick();
+    State.placement.placedShips = [];
+    State.placement.shipsToPlace.forEach(s => s.placed = false);
+    State.placement.selectedShipIndex = 0;
+    renderShipDock();
+    if (placementRenderer) placementRenderer.render();
+  };
+
+  document.getElementById("btn-place-undo").onclick = () => {
+    audio.playClick();
+    if (State.placement.history.length > 0) {
+      const last = State.placement.history.pop();
+      State.placement.placedShips = State.placement.placedShips.filter(s => s.id !== last.placedShip.id);
+      State.placement.shipsToPlace[last.shipIdx].placed = false;
+      State.placement.selectedShipIndex = last.shipIdx;
+      renderShipDock();
+      if (placementRenderer) placementRenderer.render();
+    }
+  };
+
+  document.getElementById("btn-place-ready").onclick = () => {
+    audio.playClick();
+    const currentPlacingPlayer = State.players.find(p => p.id === State.placementCurrentPlayerId);
+    const grid = BoardEngine.createEmptyGrid();
+    State.placement.placedShips.forEach(s => {
+      s.coordinates.forEach(c => grid[c.y - 1][c.x - 1] = CELL_SHIP);
+    });
+    if (currentPlacingPlayer) {
+      currentPlacingPlayer.ships = State.placement.placedShips;
+      currentPlacingPlayer.ownGrid = grid;
+      currentPlacingPlayer.isReady = true;
+    }
+
+    // In local pass & play, let Player 2, 3, 4 place their ships sequentially
+    if (State.gameMode === "local") {
+      const nextUnready = State.players.find(p => !p.isReady);
+      if (nextUnready) {
+        document.getElementById("pass-device-player-name").innerText = `Sıradaki: ${nextUnready.name}`;
+        switchScreen("pass-device");
+        document.getElementById("btn-pass-device-continue").onclick = () => {
+          initPlacementPhase(nextUnready.id);
+        };
+        return;
+      }
+    }
+
+    startBattleGame();
+  };
+
+  // Battle Phase
+  document.getElementById("btn-fire-action").onclick = () => {
+    executeFireAction();
+  };
+
+  document.getElementById("btn-zoom-in").onclick = () => {
+    if (battleRenderer) { battleRenderer.scale = Math.min(battleRenderer.maxScale, battleRenderer.scale * 1.25); battleRenderer.render(); }
+  };
+  document.getElementById("btn-zoom-out").onclick = () => {
+    if (battleRenderer) { battleRenderer.scale = Math.max(battleRenderer.minScale, battleRenderer.scale * 0.8); battleRenderer.render(); }
+  };
+  document.getElementById("btn-center-board").onclick = () => {
+    if (battleRenderer) battleRenderer.fitBoardToScreen();
+  };
+  document.getElementById("btn-place-zoom-reset").onclick = () => {
+    if (placementRenderer) placementRenderer.fitBoardToScreen();
+  };
+
+  // Pass device screen
+  document.getElementById("btn-pass-device-continue").onclick = () => {
+    updateTurnDisplay();
+    updateBattleTabs();
+    switchScreen("battle");
+  };
+
+  // Settings
+  document.getElementById("toggle-audio").onclick = function() {
+    this.classList.toggle("on");
+    audio.enabled = this.classList.contains("on");
+    audio.playClick();
+  };
+  document.getElementById("toggle-vibrate").onclick = function() {
+    this.classList.toggle("on");
+  };
+  document.getElementById("btn-settings-back").onclick = () => {
+    audio.playClick();
+    switchScreen("menu");
+  };
+});
+
+function setupLobby(isHost) {
+  switchScreen("lobby");
+  document.getElementById("lobby-room-status").innerText = `Oyuncular: 1/${State.totalPlayers}`;
+  document.getElementById("lobby-transport-name").innerText = State.gameMode.toUpperCase();
+
+  State.players = [
+    { id: 1, name: State.playerName, isHost: true, isReady: false, isAlive: true, ships: [], ownGrid: null }
+  ];
+
+  if (State.gameMode === "local") {
+    for (let i = 2; i <= State.totalPlayers; i++) {
+      State.players.push({
+        id: i,
+        name: `Amiral ${i}`,
+        isHost: false,
+        isReady: false,
+        isAlive: true,
+        ships: [],
+        ownGrid: null
+      });
+    }
+  }
+
+  renderLobbyUI();
+
+  document.getElementById("btn-lobby-start").onclick = () => {
+    audio.playClick();
+    initPlacementPhase(1);
+  };
+
+  document.getElementById("btn-lobby-leave").onclick = () => {
+    audio.playClick();
+    if (window.AndroidBluetooth) window.AndroidBluetooth.disconnect();
+    switchScreen("menu");
+  };
+}
+
+function renderLobbyUI() {
+  const list = document.getElementById("lobby-player-list");
+  list.innerHTML = "";
+  State.players.forEach(p => {
+    list.innerHTML += `
+      <div class="player-item">
+        <div><b>${p.name}</b> ${p.isHost ? '<span class="badge badge-host">HOST</span>' : ''}</div>
+        <span class="badge ${p.isReady ? 'badge-ready' : 'badge-waiting'}">${p.isReady ? 'HAZIR' : 'BEKLENİYOR'}</span>
+      </div>
+    `;
+  });
+}
+
+function refreshPairedDevices() {
+  const container = document.getElementById("paired-device-list");
+  if (!window.AndroidBluetooth) {
+    container.innerHTML = `<div style="font-size:12px; color:var(--accent-orange); padding:8px;">Android Bluetooth Bridge WebView içinde aktif değildir. Tek Oyunculu veya Yerel modları kullanabilirsiniz.</div>`;
+    return;
+  }
+
+  try {
+    const jsonStr = window.AndroidBluetooth.getPairedDevices();
+    const list = JSON.parse(jsonStr || "[]");
+    container.innerHTML = "";
+
+    if (list.length === 0) {
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-muted); padding:8px;">Eşleşmiş cihaz bulunamadı. Lütfen önce Bluetooth ayarlarından eşleştirin.</div>`;
+      return;
+    }
+
+    list.forEach(dev => {
+      const item = document.createElement("div");
+      item.className = "device-item";
+      item.innerHTML = `
+        <div>
+          <div style="font-weight:bold; font-size:13px; color:#fff;">${dev.name}</div>
+          <div style="font-size:11px; color:var(--text-muted);">${dev.address}</div>
+        </div>
+        <button class="btn btn-sm btn-primary" style="min-height:32px;">BAĞLAN</button>
+      `;
+      item.querySelector("button").onclick = () => {
+        audio.playClick();
+        window.AndroidBluetooth.connectToAddress(dev.address);
+        State.gameMode = "bluetooth";
+        setupLobby(false);
+      };
+      container.appendChild(item);
+    });
+  } catch(e) {
+    container.innerHTML = `<div style="font-size:12px; color:var(--accent-red); padding:8px;">Cihaz listesi okunamadı: ${e.message}</div>`;
+  }
+}
+
+function addDiscoveredDeviceUI(dev) {
+  const container = document.getElementById("paired-device-list");
+  const existing = document.getElementById("dev_" + dev.address.replace(/:/g, "_"));
+  if (existing) return;
+
+  const item = document.createElement("div");
+  item.id = "dev_" + dev.address.replace(/:/g, "_");
+  item.className = "device-item";
+  item.innerHTML = `
+    <div>
+      <div style="font-weight:bold; font-size:13px; color:var(--accent-green);">${dev.name} (Yeni Bulundu)</div>
+      <div style="font-size:11px; color:var(--text-muted);">${dev.address}</div>
+    </div>
+    <button class="btn btn-sm btn-accent" style="min-height:32px;">BAĞLAN</button>
+  `;
+  item.querySelector("button").onclick = () => {
+    audio.playClick();
+    window.AndroidBluetooth.connectToAddress(dev.address);
+    State.gameMode = "bluetooth";
+    setupLobby(false);
+  };
+  container.prepend(item);
+}
+
+function updateSettingsStatus() {
+  const stat = document.getElementById("settings-device-status");
+  const isAndroidBridge = (typeof window.AndroidBluetooth !== "undefined");
+  stat.innerHTML = `
+    Android Bluetooth Bridge: <b>${isAndroidBridge ? '<span style="color:var(--accent-green);">Aktif (RFCOMM SPP)</span>' : '<span style="color:var(--accent-orange);">Web Modu</span>'}</b><br>
+    Web Audio API: <b>${(window.AudioContext || window.webkitAudioContext) ? '<span style="color:var(--accent-green);">Aktif</span>' : 'Yok'}</b><br>
+    Harita Boyutu: <b>30×30 (900 Hücre)</b>
+  `;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,137 @@
+name: Build & Release Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (örneğin: v1.0.0)'
+        required: false
+        default: 'latest'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Publish APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java (JDK 21)
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Prepare Configuration & Secrets
+        run: |
+          # Create .env from template if missing to satisfy secrets-gradle-plugin
+          if [ ! -f .env ]; then
+            if [ -f .env.example ]; then
+              cp .env.example .env
+            else
+              touch .env
+            fi
+          fi
+
+          # Decode debug keystore if base64 file exists
+          if [ -f debug.keystore.base64 ] && [ ! -f debug.keystore ]; then
+            base64 -d debug.keystore.base64 > debug.keystore 2>/dev/null || true
+          fi
+
+          # If debug keystore is still missing, generate a standard Android debug keystore
+          if [ ! -f debug.keystore ]; then
+            echo "Generating debug keystore..."
+            keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Setup Gradle Wrapper
+        run: |
+          chmod +x gradlew || true
+
+      - name: Build Android APK
+        run: |
+          ./gradlew assembleDebug --stacktrace --no-daemon
+
+          # Create directory for release assets
+          mkdir -p output_apks
+
+          # Find and copy generated debug APKs
+          find app/build/outputs/apk/ -type f -name "*.apk" | while read -r apk_file; do
+            echo "Bulunan APK: $apk_file"
+            cp "$apk_file" output_apks/
+          done
+
+          if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
+            cp app/build/outputs/apk/debug/app-debug.apk output_apks/AmiralBatti-debug.apk
+            cp app/build/outputs/apk/debug/app-debug.apk output_apks/app-debug.apk
+          fi
+
+          echo "Derlenen APK dosyaları:"
+          ls -la output_apks/
+
+      - name: Upload APK to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: amiral-batti-apk
+          path: output_apks/*.apk
+          retention-days: 30
+
+      - name: Determine Release Tag
+        id: vars
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          elif [ -n "${{ github.event.inputs.release_tag }}" ] && [ "${{ github.event.inputs.release_tag }}" != "latest" ]; then
+            TAG="${{ github.event.inputs.release_tag }}"
+          else
+            TAG="v1.0.${{ github.run_number }}"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "build_date=$(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: "Amiral Battı ${{ steps.vars.outputs.tag }}"
+          body: |
+            ## ⚓ Amiral Battı - Android APK Sürümü
+
+            Bu sürüm GitHub Actions ile otomatik olarak derlenmiştir.
+
+            ### 📦 Sürüm Bilgileri:
+            - **Sürüm / Etiket**: `${{ steps.vars.outputs.tag }}`
+            - **Derleme Zamanı**: `${{ steps.vars.outputs.build_date }}`
+            - **Commit**: `${{ github.sha }}`
+
+            ### 📲 Kurulum:
+            1. Aşağıdaki **Assets** bölümünden `AmiralBatti-debug.apk` dosyasını Android telefonunuza veya tabletinize indirin.
+            2. İndirilen dosyayı açın ve kurulumu onaylayın.
+            3. İyi oyunlar!
+          draft: false
+          prerelease: false
+          files: |
+            output_apks/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
